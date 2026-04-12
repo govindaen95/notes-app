@@ -112,10 +112,124 @@
   </div>
 </div>
 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Java Spring Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <style>
+    body { margin:0; font-family:Arial; background:#efeae2; }
+
+    #login {
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      background:#111b21;
+      color:white;
+    }
+
+    input, button {
+      padding:10px;
+      margin:5px;
+      border-radius:5px;
+      border:none;
+      font-size:16px;
+    }
+
+    button {
+      background:#00a884;
+      color:white;
+      cursor:pointer;
+    }
+
+    #chat {
+      display:none;
+      height:100vh;
+      flex-direction:column;
+    }
+
+    #header {
+      background:#00a884;
+      color:white;
+      padding:12px;
+      text-align:center;
+      font-weight:bold;
+    }
+
+    #messages {
+      flex:1;
+      padding:10px;
+      overflow-y:auto;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .msg {
+      padding:10px;
+      margin:5px;
+      border-radius:10px;
+      max-width:70%;
+      word-wrap:break-word;
+      font-size:14px;
+    }
+
+    .me { background:#d9fdd3; align-self:flex-end; }
+    .other { background:white; align-self:flex-start; }
+
+    #inputBox {
+      display:flex;
+      padding:10px;
+      background:#f0f0f0;
+    }
+
+    #msg {
+      flex:1;
+      border:none;
+      border-radius:20px;
+      padding:10px;
+      outline:none;
+    }
+
+    #typing {
+      font-size:12px;
+      color:gray;
+      padding-left:10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <h2>🔐 Login</h2>
+  <input id="name" placeholder="Your Name">
+  <input id="pass" placeholder="Password">
+  <button onclick="login()">Enter</button>
+</div>
+
+<!-- CHAT -->
+<div id="chat">
+  <div id="header">💬 Private Chat</div>
+  <div id="typing"></div>
+  <div id="messages"></div>
+
+  <div id="inputBox">
+    <input id="msg" placeholder="Type message...">
+    <button onclick="send()">➤</button>
+  </div>
+</div>
+
 <script>
 const PASSWORD = "09049495";
 
-// Firebase config
+/* Firebase config */
 const firebaseConfig = {
   apiKey: "XXXX",
   authDomain: "XXXX",
@@ -123,12 +237,14 @@ const firebaseConfig = {
   projectId: "XXXX"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database().ref("chat");
-
-// ✅ FIX: use window object (global safe)
+/* ✅ SAFE GLOBAL INIT */
+window.db = null;
 window.username = "";
 window.chatLoaded = false;
+
+/* INIT FIREBASE FIRST */
+firebase.initializeApp(firebaseConfig);
+window.db = firebase.database().ref("chat");
 
 /* LOGIN */
 function login(){
@@ -150,14 +266,20 @@ function login(){
   }
 }
 
-/* SEND */
+/* SEND MESSAGE */
 function send(){
   const input = document.getElementById("msg");
   const m = input.value;
 
-  if(m.trim() === "") return;
+  if(!m || m.trim() === "") return;
 
-  db.push({
+  // ✅ SAFE CHECK
+  if(!window.db){
+    alert("Chat not ready yet, refresh page");
+    return;
+  }
+
+  window.db.push({
     user: window.username,
     text: m,
     time: Date.now()
@@ -166,9 +288,9 @@ function send(){
   input.value = "";
 }
 
-/* CHAT */
+/* LOAD CHAT */
 function loadChat(){
-  db.on("child_added", snap => {
+  window.db.on("child_added", snap => {
     const d = snap.val();
     if(!d) return;
 
@@ -184,15 +306,17 @@ function loadChat(){
   });
 }
 
-/* typing */
+/* TYPING */
 document.getElementById("msg").addEventListener("input", () => {
   document.getElementById("typing").innerText = window.username + " is typing...";
 
-  clearTimeout(window.t);
-  window.t = setTimeout(() => {
+  clearTimeout(window.typingTimer);
+  window.typingTimer = setTimeout(() => {
     document.getElementById("typing").innerText = "";
   }, 1000);
 });
 </script>
+</body>
+</html>
 </body>
 </html>
