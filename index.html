@@ -100,7 +100,18 @@
 </div>
 
 <div id="chat">
-  <div id="header">💬 Private Chat</div>
+ <div id="header">
+  💬 Private Chat
+  <button onclick="deleteChat()" style="
+    float:right;
+    background:#ff3b3b;
+    padding:5px 10px;
+    font-size:12px;
+    border-radius:5px;
+  ">
+    🗑 Delete Chat
+  </button>
+</div>
   <div id="typing"></div>
   <div id="messages"></div>
 
@@ -195,6 +206,23 @@ document.getElementById("msg").addEventListener("input", () => {
     document.getElementById("typing").innerText = "";
   }, 1000);
 });
+
+function deleteChat(){
+  if(!confirm("Are you sure you want to delete ALL chat history?")){
+    return;
+  }
+
+  db.remove()
+    .then(() => {
+      document.getElementById("messages").innerHTML = "";
+      alert("Chat history deleted successfully");
+    })
+    .catch(err => {
+      alert("Error deleting chat");
+      console.error(err);
+    });
+}
+  
 </script>
 
 </body>
