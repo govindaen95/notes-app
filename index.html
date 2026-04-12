@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Spring Notes</title>
+  <title>Java Spring Notes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -96,7 +96,7 @@
 <div id="login">
   <h2>🔐 Login</h2>
   <input id="name" placeholder="Your Name">
-  <input id="pass" type="password" placeholder="Password">
+  <input id="pass" placeholder="Password">
   <button onclick="login()">Enter</button>
 </div>
 
@@ -113,40 +113,43 @@
 </div>
 
 <script>
-/* 🔥 PASSWORD */
 const PASSWORD = "09049495";
 
-/* 🔥 FIREBASE CONFIG (PUT YOURS) */
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "XXXX",
-  authDomain: "XXXX",
-  databaseURL: "XXXX",
-  projectId: "XXXX"
+  apiKey: "AIzaSyARiLE2-KrHZJwInwnBFHvAt-VJDTFxuaI",
+  authDomain: "java-notes-67e75.firebaseapp.com",
+  projectId: "java-notes-67e75",
+  storageBucket: "java-notes-67e75.firebasestorage.app",
+  messagingSenderId: "961074785783",
+  appId: "1:961074785783:web:35f8da4f5bd3a272b612f2",
+  measurementId: "G-4DJD0VE6EG"
 };
 
-/* INIT FIREBASE */
 firebase.initializeApp(firebaseConfig);
+
+// ✅ SAFE INIT (IMPORTANT)
 const db = firebase.database().ref("chat");
 
-/* GLOBAL SAFE STATE */
-let username = null;
+let username = "";
 let chatStarted = false;
 
 /* LOGIN */
 function login(){
-  const name = document.getElementById("name").value;
-  const pass = document.getElementById("pass").value;
+  const p = document.getElementById("pass").value;
+  const n = document.getElementById("name").value;
 
-  if(pass !== PASSWORD || !name.trim()){
+  if(p !== PASSWORD || !n.trim()){
     alert("Wrong details");
     return;
   }
 
-  username = name.trim();
+  username = n.trim();
 
   document.getElementById("login").style.display = "none";
   document.getElementById("chat").style.display = "flex";
 
+  // ✅ start chat ONLY ONCE
   if(!chatStarted){
     startChat();
     chatStarted = true;
@@ -156,30 +159,30 @@ function login(){
 /* SEND MESSAGE */
 function send(){
   const input = document.getElementById("msg");
-  const text = input.value;
+  const m = input.value;
 
-  if(!text.trim() || !username) return;
+  if(!m.trim()) return;
 
   db.push({
     user: username,
-    text: text,
+    text: m,
     time: Date.now()
   });
 
   input.value = "";
 }
 
-/* REALTIME CHAT */
+/* CHAT LISTENER */
 function startChat(){
-  db.on("child_added", (snap) => {
-    const data = snap.val();
-    if(!data) return;
+  db.on("child_added", snap => {
+    const d = snap.val();
+    if(!d) return;
 
-    const cls = (data.user === username) ? "me" : "other";
+    const cls = (d.user === username) ? "me" : "other";
 
     const div = document.createElement("div");
     div.className = "msg " + cls;
-    div.innerHTML = `<b>${data.user}</b><br>${data.text}`;
+    div.innerHTML = `<b>${d.user}</b><br>${d.text}`;
 
     const box = document.getElementById("messages");
     box.appendChild(div);
@@ -189,8 +192,6 @@ function startChat(){
 
 /* TYPING */
 document.getElementById("msg").addEventListener("input", () => {
-  if(!username) return;
-
   document.getElementById("typing").innerText = username + " is typing...";
 
   clearTimeout(window.typingTimer);
@@ -199,6 +200,5 @@ document.getElementById("msg").addEventListener("input", () => {
   }, 1000);
 });
 </script>
-
 </body>
 </html>
