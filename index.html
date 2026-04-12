@@ -1,55 +1,132 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Notes</title>
+  <title>Private Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <style>
-    body { font-family: Arial; margin:0; background:#e5ddd5; }
-    #login { text-align:center; margin-top:100px; }
-    #chat { display:none; height:100vh; display:flex; flex-direction:column; }
-    #messages { flex:1; padding:10px; overflow:auto; }
-    .msg { background:#dcf8c6; padding:8px; margin:5px; border-radius:8px; width:fit-content; }
-    #input { display:flex; }
-    #msg { flex:1; padding:10px; }
-    button { padding:10px; }
+    body { margin:0; font-family:Arial; background:#efeae2; }
+
+    /* LOGIN */
+    #login {
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      background:#111b21;
+      color:white;
+    }
+
+    input, button {
+      padding:10px;
+      margin:5px;
+      border-radius:5px;
+      border:none;
+      font-size:16px;
+    }
+
+    button {
+      background:#00a884;
+      color:white;
+      cursor:pointer;
+    }
+
+    /* CHAT HEADER */
+    #header {
+      background:#00a884;
+      color:white;
+      padding:12px;
+      text-align:center;
+      font-weight:bold;
+    }
+
+    /* CHAT AREA */
+    #chat {
+      display:none;
+      height:100vh;
+      flex-direction:column;
+    }
+
+    #messages {
+      flex:1;
+      padding:10px;
+      overflow-y:auto;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .msg {
+      padding:10px;
+      margin:5px;
+      border-radius:10px;
+      max-width:70%;
+      word-wrap:break-word;
+      font-size:14px;
+    }
+
+    .me {
+      background:#d9fdd3;
+      align-self:flex-end;
+    }
+
+    .other {
+      background:white;
+      align-self:flex-start;
+    }
+
+    /* INPUT */
+    #inputBox {
+      display:flex;
+      padding:10px;
+      background:#f0f0f0;
+    }
+
+    #msg {
+      flex:1;
+      border:none;
+      border-radius:20px;
+      padding:10px;
+      outline:none;
+    }
+
+    #typing {
+      font-size:12px;
+      color:gray;
+      padding-left:10px;
+    }
   </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="login">
-  <h2>Enter Password</h2>
-  <input type="password" id="pass">
-  <button onclick="check()">Enter</button>
+  <h2>🔐 Enter Username</h2>
+  <input id="name" placeholder="Your Name">
+  <input id="pass" placeholder="Password">
+  <button onclick="login()">Enter Chat</button>
 </div>
 
+<!-- CHAT -->
 <div id="chat">
+  <div id="header">💬 Private Chat</div>
+  <div id="typing"></div>
   <div id="messages"></div>
-  <div id="input">
-    <input id="msg" placeholder="Type message">
-    <button onclick="send()">Send</button>
+
+  <div id="inputBox">
+    <input id="msg" placeholder="Type message..." oninput="typing()">
+    <button onclick="send()">➤</button>
   </div>
 </div>
 
 <script>
-const PASSWORD = "1234"; // change kar lena
+const PASSWORD = "1234";
 
-function check(){
-  let p = document.getElementById("pass").value;
-  if(p === PASSWORD){
-    document.getElementById("login").style.display="none";
-    document.getElementById("chat").style.display="flex";
-    load();
-  } else {
-    alert("Wrong password");
-  }
-}
-
-// 🔥 YAHAN APNA FIREBASE CONFIG PASTE KAR
+// 🔥 Firebase config (yaha apna paste karna)
 const firebaseConfig = {
   apiKey: "XXXX",
   authDomain: "XXXX",
@@ -60,11 +137,30 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database().ref("chat");
 
+let username = "";
+
+/* LOGIN */
+function login(){
+  let p = document.getElementById("pass").value;
+  let n = document.getElementById("name").value;
+
+  if(p === PASSWORD && n !== ""){
+    username = n;
+    document.getElementById("login").style.display="none";
+    document.getElementById("chat").style.display="flex";
+    load();
+  } else {
+    alert("Wrong details");
+  }
+}
+
+/* SEND MESSAGE */
 function send(){
   let m = document.getElementById("msg").value;
   if(m.trim() === "") return;
-  
+
   db.push({
+    user: username,
     text: m,
     time: Date.now()
   });
@@ -72,29 +168,33 @@ function send(){
   document.getElementById("msg").value="";
 }
 
-// auto delete after 24 hours
-function autoDelete(){
-  db.once("value", snap => {
-    let data = snap.val();
-    for(let key in data){
-      if(Date.now() - data[key].time > 86400000){
-        db.child(key).remove();
-      }
-    }
-  });
-}
-
+/* LOAD CHAT */
 function load(){
   db.on("value", snap => {
     let data = snap.val();
-    let html="";
-    for(let key in data){
-      html += `<div class="msg">${data[key].text}</div>`;
-    }
-    document.getElementById("messages").innerHTML = html;
-  });
+    let html = "";
 
-  setInterval(autoDelete, 5000);
+    for(let k in data){
+      let d = data[k];
+      let cls = (d.user === username) ? "me" : "other";
+
+      html += `<div class="msg ${cls}">
+        <b>${d.user}</b><br>${d.text}
+      </div>`;
+    }
+
+    let box = document.getElementById("messages");
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+  });
+}
+
+/* TYPING INDICATOR (simple) */
+function typing(){
+  document.getElementById("typing").innerText = username + " is typing...";
+  setTimeout(()=>{
+    document.getElementById("typing").innerText = "";
+  },1000);
 }
 </script>
 
