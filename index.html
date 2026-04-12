@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Private Chat</title>
+  <title>Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -10,7 +10,6 @@
   <style>
     body { margin:0; font-family:Arial; background:#efeae2; }
 
-    /* LOGIN */
     #login {
       height:100vh;
       display:flex;
@@ -35,20 +34,18 @@
       cursor:pointer;
     }
 
-    /* CHAT HEADER */
+    #chat {
+      display:none;
+      height:100vh;
+      flex-direction:column;
+    }
+
     #header {
       background:#00a884;
       color:white;
       padding:12px;
       text-align:center;
       font-weight:bold;
-    }
-
-    /* CHAT AREA */
-    #chat {
-      display:none;
-      height:100vh;
-      flex-direction:column;
     }
 
     #messages {
@@ -68,17 +65,9 @@
       font-size:14px;
     }
 
-    .me {
-      background:#d9fdd3;
-      align-self:flex-end;
-    }
+    .me { background:#d9fdd3; align-self:flex-end; }
+    .other { background:white; align-self:flex-start; }
 
-    .other {
-      background:white;
-      align-self:flex-start;
-    }
-
-    /* INPUT */
     #inputBox {
       display:flex;
       padding:10px;
@@ -105,10 +94,10 @@
 
 <!-- LOGIN -->
 <div id="login">
-  <h2>🔐 Enter Username</h2>
+  <h2>🔐 Login</h2>
   <input id="name" placeholder="Your Name">
   <input id="pass" placeholder="Password">
-  <button onclick="login()">Enter Chat</button>
+  <button onclick="login()">Enter</button>
 </div>
 
 <!-- CHAT -->
@@ -118,15 +107,15 @@
   <div id="messages"></div>
 
   <div id="inputBox">
-    <input id="msg" placeholder="Type message..." oninput="typing()">
+    <input id="msg" placeholder="Type message...">
     <button onclick="send()">➤</button>
   </div>
 </div>
 
 <script>
-const PASSWORD = "1234";
+const PASSWORD = "09049495";
 
-// 🔥 Firebase config (yaha apna paste karna)
+// 🔥 Firebase config (replace yours)
 const firebaseConfig = {
   apiKey: "XXXX",
   authDomain: "XXXX",
@@ -137,18 +126,25 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database().ref("chat");
 
+// ✅ FIXED global state
 let username = "";
+let chatLoaded = false;
 
 /* LOGIN */
 function login(){
-  let p = document.getElementById("pass").value;
-  let n = document.getElementById("name").value;
+  const p = document.getElementById("pass").value;
+  const n = document.getElementById("name").value;
 
-  if(p === PASSWORD && n !== ""){
-    username = n;
-    document.getElementById("login").style.display="none";
-    document.getElementById("chat").style.display="flex";
-    load();
+  if(p === PASSWORD && n.trim() !== ""){
+    username = n.trim();
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("chat").style.display = "flex";
+
+    if(!chatLoaded){
+      loadChat();
+      chatLoaded = true;
+    }
   } else {
     alert("Wrong details");
   }
@@ -156,7 +152,9 @@ function login(){
 
 /* SEND MESSAGE */
 function send(){
-  let m = document.getElementById("msg").value;
+  const input = document.getElementById("msg");
+  const m = input.value;
+
   if(m.trim() === "") return;
 
   db.push({
@@ -165,37 +163,37 @@ function send(){
     time: Date.now()
   });
 
-  document.getElementById("msg").value="";
+  input.value = "";
 }
 
-/* LOAD CHAT */
-function load(){
-  db.on("value", snap => {
-    let data = snap.val();
-    let html = "";
+/* REALTIME CHAT FIX */
+function loadChat(){
+  db.on("child_added", snap => {
+    const d = snap.val();
+    if(!d) return;
 
-    for(let k in data){
-      let d = data[k];
-      let cls = (d.user === username) ? "me" : "other";
+    const cls = (d.user === username) ? "me" : "other";
 
-      html += `<div class="msg ${cls}">
-        <b>${d.user}</b><br>${d.text}
-      </div>`;
-    }
+    const div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.innerHTML = `<b>${d.user}</b><br>${d.text}`;
 
-    let box = document.getElementById("messages");
-    box.innerHTML = html;
+    const box = document.getElementById("messages");
+    box.appendChild(div);
+
     box.scrollTop = box.scrollHeight;
   });
 }
 
-/* TYPING INDICATOR (simple) */
-function typing(){
+/* SIMPLE TYPING */
+document.getElementById("msg").addEventListener("input", () => {
   document.getElementById("typing").innerText = username + " is typing...";
-  setTimeout(()=>{
+  clearTimeout(window.typingTimer);
+
+  window.typingTimer = setTimeout(() => {
     document.getElementById("typing").innerText = "";
-  },1000);
-}
+  }, 1000);
+});
 </script>
 
 </body>
