@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <style>
+    body { font-family: Arial; margin:0; background:#e5ddd5; }
+    #login { text-align:center; margin-top:100px; }
+    #chat { display:none; height:100vh; display:flex; flex-direction:column; }
+    #messages { flex:1; padding:10px; overflow:auto; }
+    .msg { background:#dcf8c6; padding:8px; margin:5px; border-radius:8px; width:fit-content; }
+    #input { display:flex; }
+    #msg { flex:1; padding:10px; }
+    button { padding:10px; }
+  </style>
+</head>
+
+<body>
+
+<div id="login">
+  <h2>Enter Password</h2>
+  <input type="password" id="pass">
+  <button onclick="check()">Enter</button>
+</div>
+
+<div id="chat">
+  <div id="messages"></div>
+  <div id="input">
+    <input id="msg" placeholder="Type message">
+    <button onclick="send()">Send</button>
+  </div>
+</div>
+
+<script>
+const PASSWORD = "1234"; // change kar lena
+
+function check(){
+  let p = document.getElementById("pass").value;
+  if(p === PASSWORD){
+    document.getElementById("login").style.display="none";
+    document.getElementById("chat").style.display="flex";
+    load();
+  } else {
+    alert("Wrong password");
+  }
+}
+
+// 🔥 YAHAN APNA FIREBASE CONFIG PASTE KAR
+const firebaseConfig = {
+  apiKey: "XXXX",
+  authDomain: "XXXX",
+  databaseURL: "XXXX",
+  projectId: "XXXX"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database().ref("chat");
+
+function send(){
+  let m = document.getElementById("msg").value;
+  if(m.trim() === "") return;
+  
+  db.push({
+    text: m,
+    time: Date.now()
+  });
+
+  document.getElementById("msg").value="";
+}
+
+// auto delete after 24 hours
+function autoDelete(){
+  db.once("value", snap => {
+    let data = snap.val();
+    for(let key in data){
+      if(Date.now() - data[key].time > 86400000){
+        db.child(key).remove();
+      }
+    }
+  });
+}
+
+function load(){
+  db.on("value", snap => {
+    let data = snap.val();
+    let html="";
+    for(let key in data){
+      html += `<div class="msg">${data[key].text}</div>`;
+    }
+    document.getElementById("messages").innerHTML = html;
+  });
+
+  setInterval(autoDelete, 5000);
+}
+</script>
+
+</body>
+</html>
