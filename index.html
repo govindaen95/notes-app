@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Java Spring Notes</title>
+  <title>Private Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -92,7 +92,6 @@
 
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <h2>🔐 Login</h2>
   <input id="name" placeholder="Your Name">
@@ -100,7 +99,6 @@
   <button onclick="login()">Enter</button>
 </div>
 
-<!-- CHAT -->
 <div id="chat">
   <div id="header">💬 Private Chat</div>
   <div id="typing"></div>
@@ -115,24 +113,22 @@
 <script>
 const PASSWORD = "09049495";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// 🔥 IMPORTANT: MUST HAVE databaseURL
 const firebaseConfig = {
   apiKey: "AIzaSyARiLE2-KrHZJwInwnBFHvAt-VJDTFxuaI",
   authDomain: "java-notes-67e75.firebaseapp.com",
+  databaseURL: "https://java-notes-67e75-default-rtdb.firebaseio.com",
   projectId: "java-notes-67e75",
   storageBucket: "java-notes-67e75.firebasestorage.app",
   messagingSenderId: "961074785783",
-  appId: "1:961074785783:web:35f8da4f5bd3a272b612f2",
-  measurementId: "G-4DJD0VE6EG"
+  appId: "1:961074785783:web:35f8da4f5bd3a272b612f2"
 };
 
 firebase.initializeApp(firebaseConfig);
 
-// ✅ SAFE INIT (IMPORTANT)
 const db = firebase.database().ref("chat");
 
 let username = "";
-let chatStarted = false;
 
 /* LOGIN */
 function login(){
@@ -149,14 +145,10 @@ function login(){
   document.getElementById("login").style.display = "none";
   document.getElementById("chat").style.display = "flex";
 
-  // ✅ start chat ONLY ONCE
-  if(!chatStarted){
-    startChat();
-    chatStarted = true;
-  }
+  startChat();
 }
 
-/* SEND MESSAGE */
+/* SEND */
 function send(){
   const input = document.getElementById("msg");
   const m = input.value;
@@ -172,8 +164,10 @@ function send(){
   input.value = "";
 }
 
-/* CHAT LISTENER */
+/* REALTIME LISTENER (FIXED) */
 function startChat(){
+  db.off(); // 🔥 prevent duplicate listeners
+
   db.on("child_added", snap => {
     const d = snap.val();
     if(!d) return;
@@ -192,6 +186,8 @@ function startChat(){
 
 /* TYPING */
 document.getElementById("msg").addEventListener("input", () => {
+  if(!username) return;
+
   document.getElementById("typing").innerText = username + " is typing...";
 
   clearTimeout(window.typingTimer);
@@ -200,5 +196,6 @@ document.getElementById("msg").addEventListener("input", () => {
   }, 1000);
 });
 </script>
+
 </body>
 </html>
