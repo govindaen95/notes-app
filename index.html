@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Java Spring Boot Notes</title>
+  <title>Java Spring Boot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -102,15 +102,16 @@
 <div id="chat">
  <div id="header">
   💬 Java Study Notes Group  chat
-  <button onclick="deleteChat()" style="
-    float:right;
-    background:#ff3b3b;
-    padding:5px 10px;
-    font-size:12px;
-    border-radius:5px;
-  ">
-    🗑 Delete Chat
-  </button>
+ <button id="deleteBtn" onclick="deleteChat()" style="
+  float:right;
+  background:#ff3b3b;
+  padding:5px 10px;
+  font-size:12px;
+  border-radius:5px;
+  display:none;   /* hidden by default */
+">
+  🗑 Delete Chat
+</button>
 </div>
   <div id="typing"></div>
   <div id="messages"></div>
@@ -140,8 +141,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database().ref("chat");
 
 let username = "";
-
-/* LOGIN */
 function login(){
   const p = document.getElementById("pass").value;
   const n = document.getElementById("name").value;
@@ -152,9 +151,13 @@ function login(){
   }
 
   username = n.trim();
-
+  const SUPER_USERS = ["admin"];   
   document.getElementById("login").style.display = "none";
   document.getElementById("chat").style.display = "flex";
+  
+   if (SUPER_USERS.includes(username.toLowerCase())) {
+    document.getElementById("deleteBtn").style.display = "inline-block";
+  }
 
   startChat();
 }
@@ -175,23 +178,37 @@ function send(){
   input.value = "";
 }
 
+function formatTime(ts){
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 /* REALTIME LISTENER (FIXED) */
 function startChat(){
-  db.off(); // 🔥 prevent duplicate listeners
+  db.off();
 
   db.on("child_added", snap => {
     const d = snap.val();
     if(!d) return;
 
     const cls = (d.user === username) ? "me" : "other";
+    const time = d.time ? formatTime(d.time) : "";
 
     const div = document.createElement("div");
     div.className = "msg " + cls;
-    div.innerHTML = `<b>${d.user}</b><br>${d.text}`;
+
+   div.innerHTML = `<b>${d.user}</b><br>${linkify(d.text)}`;
 
     const box = document.getElementById("messages");
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
+  });
+}
+
+function linkify(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlRegex, function(url) {
+    return `<a href="${url}" target="_blank" style="color:#4da3ff;">${url}</a>`;
   });
 }
 
