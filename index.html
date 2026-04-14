@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Java Spring Notes</title>
+  <title>Java World</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -148,7 +148,15 @@
 
 <script>
 let replyTo = null; // { user, text }
-const PASSWORD = "93052";
+ const PASSWORD_HASH = "PASTE_HASH_HERE"; = "f6cdb47f84d8f5a30db21a80d65b172ca21f590433ab08c440afa0d104f04582";
+ async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 // 🔥 IMPORTANT: MUST HAVE databaseURL
 const firebaseConfig = {
@@ -166,21 +174,30 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database().ref("chat");
 
 let username = "";
-function login(){
+async function login(){
   const p = document.getElementById("pass").value;
   const n = document.getElementById("name").value;
 
-  if(p !== PASSWORD || !n.trim()){
+  if(!n.trim()){
     alert("Wrong details");
     return;
   }
 
+  const inputHash = await sha256(p);
+
+  if(inputHash !== PASSWORD_HASH){
+    alert("Wrong details");
+    return;
+  }
+
+  // 👇 rest SAME AS YOUR CODE
   username = n.trim();
   const SUPER_USERS = ["admin"];   
+
   document.getElementById("login").style.display = "none";
   document.getElementById("chat").style.display = "flex";
   
-   if (SUPER_USERS.includes(username.toLowerCase())) {
+  if (SUPER_USERS.includes(username.toLowerCase())) {
     document.getElementById("deleteBtn").style.display = "inline-block";
   }
 
