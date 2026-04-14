@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>.Java Spring Boot Notes</title>
+  <title>Java Spring Notes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -87,6 +87,7 @@
       color:gray;
       padding-left:10px;
     }
+	#privacyShield { background: black; }
   </style>
 </head>
 
@@ -302,17 +303,26 @@ function deleteChat(){
 <script>
 document.addEventListener("visibilitychange", function () {
   if (document.hidden) {
-    username = "";
-    db.off();
-    document.getElementById("messages").innerHTML = "";
-    document.getElementById("chat").style.display = "none";
-    document.getElementById("login").style.display = "flex";
-    document.getElementById("pass").value = "";
-    document.getElementById("msg").value = "";
-    location.reload();
+
+    document.getElementById("privacyShield").style.display = "flex";
+
+    // small delay so preview captures THIS screen
+    setTimeout(() => {
+      username = "";
+      db.off();
+      document.getElementById("messages").innerHTML = "";
+      document.getElementById("chat").style.display = "none";
+      document.getElementById("login").style.display = "flex";
+      document.getElementById("pass").value = "";
+      document.getElementById("msg").value = "";
+      location.reload();
+    }, 200);
   }
 });
 </script>
+<div id="privacyShield">
+  🔒 Session Locked
+</div>
 
 </body>
 </html>
