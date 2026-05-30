@@ -101,6 +101,23 @@
   justify-content: center;
   font-size: 22px;
 }
+
+#floatingDate{
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.95);
+  color: #555;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  z-index: 9999;
+  display: none;
+}
+
   </style>
 </head>
 
@@ -236,6 +253,28 @@ function formatTime(ts){
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+function getDateLabel(timestamp){
+  const d = new Date(timestamp);
+
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if(d.toDateString() === today.toDateString()){
+    return "Today";
+  }
+
+  if(d.toDateString() === yesterday.toDateString()){
+    return "Yesterday";
+  }
+
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+}
+
 /* REALTIME LISTENER (FIXED) */
 function startChat(){
   db.off();
@@ -248,6 +287,7 @@ function startChat(){
     const time = d.time ? formatTime(d.time) : "";
 
     const div = document.createElement("div");
+	div.dataset.date = getDateLabel(d.time);
     div.className = "msg " + cls;
 
     // 🔥 IMPORTANT (reply ke liye)
@@ -292,6 +332,41 @@ function startChat(){
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   });
+  
+  const msgBox = document.getElementById("messages");
+const floatingDate = document.getElementById("floatingDate");
+
+let hideTimer;
+
+msgBox.addEventListener("scroll", () => {
+
+  const msgs = document.querySelectorAll(".msg");
+
+  let currentDate = "";
+
+  msgs.forEach(msg => {
+
+    const rect = msg.getBoundingClientRect();
+
+    if(rect.top <= 120){
+      currentDate = msg.dataset.date;
+    }
+
+  });
+
+  if(currentDate){
+
+    floatingDate.innerText = currentDate;
+    floatingDate.style.display = "block";
+
+    clearTimeout(hideTimer);
+
+    hideTimer = setTimeout(() => {
+      floatingDate.style.display = "none";
+    }, 1500);
+  }
+
+});
 }
 
 function linkify(text) {
@@ -328,6 +403,7 @@ function deleteChat(){
       console.error(err);
     });
 }
+
   
 </script>
 <script>
@@ -353,6 +429,7 @@ document.addEventListener("visibilitychange", function () {
 <div id="privacyShield">
   🔒 Session Locked
 </div>
+<div id="floatingDate"></div>
 
 </body>
 </html>
